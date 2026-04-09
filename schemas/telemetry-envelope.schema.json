@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/telemetry-envelope.schema.json",
+  "title": "TelemetryEnvelope",
+  "type": "object",
+  "required": [
+    "eventId",
+    "siteId",
+    "assetId",
+    "signalId",
+    "quality",
+    "ts_source",
+    "ts_ingest",
+    "seq",
+    "unit",
+    "value"
+  ],
+  "properties": {
+    "eventId": { "type": "string", "minLength": 1 },
+    "siteId": { "type": "string", "minLength": 1 },
+    "assetId": { "type": "string", "minLength": 1 },
+    "signalId": { "type": "string", "minLength": 1 },
+    "quality": {
+      "type": "string",
+      "enum": ["good", "uncertain", "bad"]
+    },
+    "ts_source": { "type": "string", "format": "date-time" },
+    "ts_ingest": { "type": "string", "format": "date-time" },
+    "seq": { "type": "integer", "minimum": 0 },
+    "unit": { "type": "string" },
+    "value": {
+      "oneOf": [
+        { "type": "number" },
+        { "type": "integer" },
+        { "type": "string" },
+        { "type": "boolean" }
+      ]
+    },
+    "tags": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "traceId": { "type": "string" }
+  },
+  "additionalProperties": false
+}
+

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/device-registration.schema.json",
+  "title": "DeviceRegistration",
+  "type": "object",
+  "required": [
+    "siteId",
+    "assetId",
+    "deviceId",
+    "protocol",
+    "signalMap",
+    "units",
+    "samplingClass"
+  ],
+  "properties": {
+    "siteId": { "type": "string", "minLength": 1 },
+    "assetId": { "type": "string", "minLength": 1 },
+    "deviceId": { "type": "string", "minLength": 1 },
+    "protocol": { "type": "string", "minLength": 1 },
+    "signalMap": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "type": "string" }
+    },
+    "units": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "samplingClass": {
+      "type": "string",
+      "enum": ["subsecond", "1s", "5s", "15s", "60s", "300s"]
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "ownershipTags": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}
+

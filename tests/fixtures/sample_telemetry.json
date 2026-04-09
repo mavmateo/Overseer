@@ -1,0 +1,18 @@
+{
+  "eventId": "evt-001",
+  "siteId": "site-alpha",
+  "assetId": "crusher-01",
+  "signalId": "motor_current",
+  "quality": "good",
+  "ts_source": "2026-04-09T08:00:00Z",
+  "ts_ingest": "2026-04-09T08:00:01Z",
+  "seq": 101,
+  "unit": "A",
+  "value": 42.8,
+  "tags": {
+    "area": "processing",
+    "equipmentClass": "crusher"
+  },
+  "traceId": "trace-001"
+}
+

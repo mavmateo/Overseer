@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/command-request.schema.json",
+  "title": "CommandRequest",
+  "type": "object",
+  "required": [
+    "commandId",
+    "siteId",
+    "assetId",
+    "targetSignal",
+    "requestedValue",
+    "requestedBy",
+    "priority",
+    "expiresAt"
+  ],
+  "properties": {
+    "commandId": { "type": "string", "minLength": 1 },
+    "siteId": { "type": "string", "minLength": 1 },
+    "assetId": { "type": "string", "minLength": 1 },
+    "targetSignal": { "type": "string", "minLength": 1 },
+    "requestedValue": {
+      "oneOf": [
+        { "type": "number" },
+        { "type": "integer" },
+        { "type": "string" },
+        { "type": "boolean" }
+      ]
+    },
+    "requestedBy": { "type": "string", "minLength": 1 },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"]
+    },
+    "approved": { "type": "boolean" },
+    "approvalReference": { "type": "string" },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "approved": { "const": false }
+        },
+        "required": ["approved"]
+      },
+      "then": {
+        "properties": {
+          "approvalReference": { "maxLength": 0 }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}
+

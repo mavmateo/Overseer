@@ -1,0 +1,11 @@
+replicaCount: 2
+postgresql:
+  enabled: true
+auth:
+  adminUser: admin
+proxy: edge
+ingress:
+  enabled: false
+metrics:
+  enabled: true
+

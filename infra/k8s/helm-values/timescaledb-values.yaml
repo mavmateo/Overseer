@@ -1,0 +1,25 @@
+primary:
+  persistence:
+    enabled: true
+    size: 1Ti
+  resources:
+    requests:
+      cpu: "4"
+      memory: 16Gi
+replica:
+  enabled: true
+  replicaCount: 2
+backup:
+  enabled: true
+  destination: s3://minio/timescaledb
+postgresql:
+  parameters:
+    shared_buffers: 4GB
+    effective_cache_size: 12GB
+    max_connections: 300
+    wal_level: logical
+timescaledb:
+  enabled: true
+  compression:
+    enabled: true
+

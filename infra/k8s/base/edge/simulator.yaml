@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dummy-simulator
+  namespace: og-edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dummy-simulator
+  template:
+    metadata:
+      labels:
+        app: dummy-simulator
+    spec:
+      containers:
+        - name: dummy-simulator
+          image: ghcr.io/replace-me/og-simulator:stable
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MQTT_BROKER_URL
+              value: mqtt://mosquitto.og-edge.svc.cluster.local:1883
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+

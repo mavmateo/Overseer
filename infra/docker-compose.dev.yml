@@ -1,0 +1,119 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+
+  kafka:
+    image: bitnami/kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka_data:/bitnami/kafka
+
+  kafka-topics:
+    image: bitnami/kafka
+    depends_on:
+      - kafka
+    entrypoint: ["/bin/bash", "/workspace/kafka/create-topics.sh"]
+    volumes:
+      - ./kafka:/workspace/kafka:ro
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: og_iot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./timescaledb/init:/docker-entrypoint-initdb.d:ro
+      - timescale_data:/var/lib/postgresql/data
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  openbao:
+    image: openbao/openbao:latest
+    command: ["server", "-dev", "-dev-root-token-id=root"]
+    ports:
+      - "8200:8200"
+    environment:
+      BAO_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+
+  backend:
+    build:
+      context: ..
+      dockerfile: services/backend/Dockerfile
+    depends_on:
+      - timescaledb
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@timescaledb:5432/og_iot}
+      DEPLOYMENT_MODE: dev
+      API_PORT: 8000
+    ports:
+      - "8000:8000"
+
+  site-forwarder:
+    build:
+      context: ..
+      dockerfile: services/site-forwarder/Dockerfile
+    depends_on:
+      - mosquitto
+      - kafka
+    environment:
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL:-mqtt://mosquitto:1883}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      STORE_BUFFER_PATH: /data/site-forwarder/buffer.db
+      SITE_ID: ${SITE_ID:-site-alpha}
+    volumes:
+      - forwarder_data:/data/site-forwarder
+
+  simulator:
+    build:
+      context: ..
+      dockerfile: services/simulator/Dockerfile
+    depends_on:
+      - mosquitto
+    environment:
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL:-mqtt://mosquitto:1883}
+
+  live-feed-adapter:
+    build:
+      context: ..
+      dockerfile: services/live-feed-adapter/Dockerfile
+    depends_on:
+      - mosquitto
+    environment:
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL:-mqtt://mosquitto:1883}
+      LIVE_FEED_PORT: 8090
+    ports:
+      - "8090:8090"
+
+volumes:
+  mosquitto_data:
+  kafka_data:
+  timescale_data:
+  forwarder_data:
+

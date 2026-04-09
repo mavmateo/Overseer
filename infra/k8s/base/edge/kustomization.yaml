@@ -1,0 +1,8 @@
+resources:
+  - namespaces.yaml
+  - mosquitto.yaml
+  - site-forwarder.yaml
+  - simulator.yaml
+  - node-red-policy-configmap.yaml
+  - network-policies.yaml
+

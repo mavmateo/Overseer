@@ -1,0 +1,2 @@
+"""Dummy industrial sensor simulator."""
+

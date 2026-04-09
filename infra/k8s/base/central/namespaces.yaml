@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: og-core
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: og-apps
+

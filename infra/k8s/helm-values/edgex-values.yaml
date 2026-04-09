@@ -1,0 +1,18 @@
+security:
+  enabled: true
+edgex:
+  deviceServices:
+    opcua:
+      enabled: true
+    modbus:
+      enabled: true
+    virtual:
+      enabled: true
+appServices:
+  rulesEngine:
+    enabled: false
+  mqttExport:
+    enabled: true
+redis:
+  enabled: true
+

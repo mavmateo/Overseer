@@ -1,0 +1,14 @@
+{
+  "name": "og-live-feed-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Node.js sidecar for high-volume MQTT live feed fan-out",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "mqtt": "latest"
+  }
+}
+

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-red-command-policy
+  namespace: og-edge
+data:
+  allowed-topics.json: |
+    {
+      "allowedPublishTopics": [
+        "site/site-alpha/area/processing/asset/crusher-01/command/request",
+        "site/site-alpha/area/dewatering/asset/pump-07/command/request"
+      ],
+      "requiredHeaders": [
+        "commandId",
+        "siteId",
+        "assetId",
+        "approvalReference",
+        "expiresAt"
+      ]
+    }
+

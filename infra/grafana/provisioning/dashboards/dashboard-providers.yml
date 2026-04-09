@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: Industrial Platform
+    folder: Industrial Platform
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards
+

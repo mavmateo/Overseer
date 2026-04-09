@@ -1,0 +1,64 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+  namespace: og-edge
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-edge-mqtt
+  namespace: og-edge
+spec:
+  podSelector:
+    matchLabels:
+      app: mosquitto
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: site-forwarder
+        - podSelector:
+            matchLabels:
+              app: dummy-simulator
+      ports:
+        - protocol: TCP
+          port: 1883
+  egress:
+    - to:
+        - podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-forwarder-egress
+  namespace: og-edge
+spec:
+  podSelector:
+    matchLabels:
+      app: site-forwarder
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 1883
+        - protocol: TCP
+          port: 9092
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: mosquitto
+  policyTypes:
+    - Ingress
+    - Egress
+

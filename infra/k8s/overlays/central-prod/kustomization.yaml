@@ -1,0 +1,21 @@
+resources:
+  - ../../base/central
+
+patches:
+  - target:
+      kind: Deployment
+      name: backend
+      namespace: og-apps
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: live-feed-adapter
+      namespace: og-apps
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+

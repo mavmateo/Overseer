@@ -1,0 +1,48 @@
+kraft:
+  enabled: true
+controller:
+  replicaCount: 3
+broker:
+  replicaCount: 3
+persistence:
+  enabled: true
+  size: 500Gi
+auth:
+  clientProtocol: tls
+  interBrokerProtocol: tls
+metrics:
+  kafka:
+    enabled: true
+provisioning:
+  topics:
+    - name: raw.telemetry
+      partitions: 12
+      replicationFactor: 3
+    - name: raw.events
+      partitions: 6
+      replicationFactor: 3
+    - name: raw.alarms
+      partitions: 6
+      replicationFactor: 3
+    - name: asset.state
+      partitions: 6
+      replicationFactor: 3
+    - name: command.request
+      partitions: 3
+      replicationFactor: 3
+    - name: command.ack
+      partitions: 3
+      replicationFactor: 3
+    - name: analytics.features
+      partitions: 6
+      replicationFactor: 3
+    - name: analytics.inference
+      partitions: 6
+      replicationFactor: 3
+    - name: platform.audit
+      partitions: 3
+      replicationFactor: 3
+    - name: security.audit
+      partitions: 3
+      replicationFactor: 3
+

@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: og-edge
+data:
+  mosquitto.conf: |
+    persistence true
+    persistence_location /mosquitto/data/
+    listener 1883 0.0.0.0
+    allow_anonymous false
+    password_file /mosquitto/config/passwords
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mosquitto-passwords
+  namespace: og-edge
+type: Opaque
+stringData:
+  passwords: |
+    platform:$7$dummy-hash-replace-in-prod
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: og-edge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:latest
+          ports:
+            - containerPort: 1883
+              name: mqtt
+          volumeMounts:
+            - name: config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: passwords
+              mountPath: /mosquitto/config/passwords
+              subPath: passwords
+            - name: data
+              mountPath: /mosquitto/data
+      volumes:
+        - name: config
+          configMap:
+            name: mosquitto-config
+        - name: passwords
+          secret:
+            secretName: mosquitto-passwords
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  namespace: og-edge
+spec:
+  selector:
+    app: mosquitto
+  ports:
+    - name: mqtt
+      port: 1883
+      targetPort: mqtt
+

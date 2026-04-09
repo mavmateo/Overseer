@@ -1,0 +1,21 @@
+resources:
+  - ../../base/edge
+
+patches:
+  - target:
+      kind: ConfigMap
+      name: site-forwarder-config
+      namespace: og-edge
+    patch: |-
+      - op: replace
+        path: /data/SITE_ID
+        value: site-dev-01
+  - target:
+      kind: Deployment
+      name: dummy-simulator
+      namespace: og-edge
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+

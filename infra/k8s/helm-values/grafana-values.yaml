@@ -1,0 +1,26 @@
+replicas: 2
+admin:
+  existingSecret: grafana-admin
+service:
+  type: ClusterIP
+persistence:
+  enabled: true
+  size: 20Gi
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: TimescaleDB
+        type: postgres
+        access: proxy
+        url: timescaledb-rw.og-core.svc.cluster.local:5432
+        database: og_iot
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: industrial
+        type: file
+        options:
+          path: /var/lib/grafana/dashboards/industrial
+

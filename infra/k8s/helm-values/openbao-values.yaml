@@ -1,0 +1,14 @@
+server:
+  ha:
+    enabled: true
+    replicas: 3
+    raft:
+      enabled: true
+  dataStorage:
+    enabled: true
+    size: 50Gi
+injector:
+  enabled: true
+ui:
+  enabled: true
+
