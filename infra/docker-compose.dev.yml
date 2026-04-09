@@ -68,12 +68,27 @@ services:
       dockerfile: services/backend/Dockerfile
     depends_on:
       - timescaledb
+      - ingestor
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@timescaledb:5432/og_iot}
       DEPLOYMENT_MODE: dev
       API_PORT: 8000
     ports:
       - "8000:8000"
+
+  ingestor:
+    build:
+      context: ..
+      dockerfile: services/ingestor/Dockerfile
+    depends_on:
+      - kafka
+      - timescaledb
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@timescaledb:5432/og_iot}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID:-og-timescale-ingestor}
+      KAFKA_TOPICS: ${KAFKA_TOPICS:-raw.telemetry,raw.alarms,raw.events,asset.state,command.request,command.ack,analytics.inference}
+      INGESTOR_LOG_LEVEL: ${INGESTOR_LOG_LEVEL:-INFO}
 
   site-forwarder:
     build:
@@ -116,4 +131,3 @@ volumes:
   kafka_data:
   timescale_data:
   forwarder_data:
-

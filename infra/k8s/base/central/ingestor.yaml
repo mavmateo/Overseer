@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ingestor-config
+  namespace: og-apps
+data:
+  DATABASE_URL: postgresql://platform_app@timescaledb-rw.og-core.svc.cluster.local:5432/og_iot
+  KAFKA_BOOTSTRAP_SERVERS: kafka.og-core.svc.cluster.local:9092
+  KAFKA_GROUP_ID: og-timescale-ingestor
+  KAFKA_TOPICS: raw.telemetry,raw.alarms,raw.events,asset.state,command.request,command.ack,analytics.inference
+  INGESTOR_LOG_LEVEL: INFO
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestor
+  namespace: og-apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingestor
+  template:
+    metadata:
+      labels:
+        app: ingestor
+    spec:
+      containers:
+        - name: ingestor
+          image: ghcr.io/replace-me/og-ingestor:stable
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: ingestor-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

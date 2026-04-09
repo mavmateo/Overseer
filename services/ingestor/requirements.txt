@@ -1,0 +1,4 @@
+confluent-kafka
+psycopg[binary]
+pydantic-settings
+
