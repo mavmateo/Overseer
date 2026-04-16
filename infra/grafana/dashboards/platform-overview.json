@@ -35,7 +35,7 @@
       "targets": [
         {
           "format": "table",
-          "rawSql": "SELECT updated_at AS time, spool_depth FROM site_health ORDER BY updated_at DESC LIMIT 1;",
+          "rawSql": "SELECT NOW() AS time, COALESCE((SELECT spool_depth FROM site_health ORDER BY updated_at DESC LIMIT 1), 0) AS spool_depth;",
           "refId": "A"
         }
       ],
@@ -57,7 +57,7 @@
       "targets": [
         {
           "format": "time_series",
-          "rawSql": "SELECT ts_source AS time, value FROM measurements WHERE asset_id = 'crusher-01' AND signal_id = 'motor_current' ORDER BY ts_source DESC LIMIT 200;",
+          "rawSql": "SELECT $__timeGroupAlias(ts_source, '10s'), AVG(value) AS value FROM measurements WHERE $__timeFilter(ts_source) AND asset_id = 'crusher-01' AND signal_id = 'motor_current' GROUP BY 1 ORDER BY 1;",
           "refId": "A"
         }
       ],
@@ -73,10 +73,9 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "title": "Platform Overview",
   "version": 1
 }
-

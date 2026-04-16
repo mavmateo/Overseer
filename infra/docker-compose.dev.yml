@@ -1,6 +1,6 @@
 services:
   mosquitto:
-    image: eclipse-mosquitto
+    image: eclipse-mosquitto:2.1.2-alpine
     ports:
       - "1883:1883"
     volumes:
@@ -8,34 +8,38 @@ services:
       - mosquitto_data:/mosquitto/data
 
   kafka:
-    image: bitnami/kafka
+    image: apache/kafka:4.0.2
+    hostname: kafka
     ports:
-      - "9092:9092"
+      - "29092:29092"
     environment:
-      KAFKA_CFG_NODE_ID: 1
-      KAFKA_CFG_PROCESS_ROLES: broker,controller
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
-      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093,EXTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
     volumes:
-      - kafka_data:/bitnami/kafka
+      - kafka_data:/var/lib/kafka/data
 
   kafka-topics:
-    image: bitnami/kafka
+    image: apache/kafka:4.0.2
     depends_on:
       - kafka
-    entrypoint: ["/bin/bash", "/workspace/kafka/create-topics.sh"]
+    entrypoint: ["/bin/sh", "/workspace/kafka/create-topics.sh"]
     volumes:
       - ./kafka:/workspace/kafka:ro
 
   timescaledb:
     image: timescale/timescaledb:latest-pg16
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_DB: og_iot
       POSTGRES_USER: postgres
@@ -55,7 +59,7 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
 
   openbao:
-    image: openbao/openbao:latest
+    image: openbao/openbao:2.5.1
     command: ["server", "-dev", "-dev-root-token-id=root"]
     ports:
       - "8200:8200"

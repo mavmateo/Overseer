@@ -94,12 +94,23 @@ class Forwarder:
                 continue
             for record in pending:
                 try:
+                    delivery_errors: list[str] = []
+
+                    def _delivery_report(error, _msg) -> None:
+                        if error is not None:
+                            delivery_errors.append(str(error))
+
                     self.kafka_producer.produce(
                         record.kafka_topic,
                         key=record.key.encode("utf-8"),
                         value=record.payload.encode("utf-8"),
+                        on_delivery=_delivery_report,
                     )
-                    self.kafka_producer.flush(timeout=5.0)
+                    remaining = self.kafka_producer.flush(timeout=5.0)
+                    if remaining > 0:
+                        raise TimeoutError(f"{remaining} Kafka message(s) remained undelivered after flush timeout")
+                    if delivery_errors:
+                        raise RuntimeError("; ".join(delivery_errors))
                     self.buffer.mark_sent(record.row_id)
                 except Exception as exc:  # pragma: no cover - network-dependent
                     self.buffer.mark_failed(record.row_id, str(exc))
@@ -119,4 +130,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

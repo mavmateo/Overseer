@@ -34,10 +34,8 @@ def build_mqtt_topic(site_id: str, area_id: str, asset_id: str, channel: str) ->
 
 def parse_mqtt_topic(topic: str) -> ParsedTopic:
     parts = topic.split("/")
-    if len(parts) < 8:
-        raise TopicError(f"Topic has too few segments: {topic}")
-    if parts[0] != "site" or parts[2] != "area" or parts[4] != "asset":
-        raise TopicError(f"Topic is not canonical: {topic}")
+    if len(parts) < 7 or parts[0] != "site" or parts[2] != "area" or parts[4] != "asset":
+        raise TopicError(f"Topic is malformed: {topic}")
     channel = "/".join(parts[6:])
     if channel not in MQTT_CHANNELS:
         raise TopicError(f"Unsupported channel: {channel}")

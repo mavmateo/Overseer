@@ -32,7 +32,8 @@ This repository implements a production-oriented, fully open-source industrial I
 3. Confirm the API is up:
    - `curl http://localhost:8000/healthz`
 4. Confirm Kafka has telemetry:
-   - `docker compose -f infra/docker-compose.dev.yml exec kafka kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic raw.telemetry --from-beginning --max-messages 5`
+   - `docker compose -f infra/docker-compose.dev.yml exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --topic raw.telemetry --from-beginning --max-messages 5`
+   - If you connect from the host instead of `docker compose exec`, use `localhost:29092`.
 5. Confirm TimescaleDB has ingested rows:
    - `docker compose -f infra/docker-compose.dev.yml exec timescaledb psql -U postgres -d og_iot -c "SELECT asset_id, signal_id, value, ts_source FROM measurements ORDER BY ts_source DESC LIMIT 10;"`
 6. Open Grafana at `http://localhost:3000` and view the `Platform Overview` dashboard.
