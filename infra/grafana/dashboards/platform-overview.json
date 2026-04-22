@@ -7,20 +7,37 @@
   "panels": [
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "timescaledb"
       },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 100
+              },
+              {
+                "color": "red",
+                "value": 500
+              }
+            ]
           }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 6,
+        "w": 8,
         "x": 0,
         "y": 0
       },
@@ -34,8 +51,10 @@
       },
       "targets": [
         {
+          "editorMode": "code",
           "format": "table",
           "rawSql": "SELECT NOW() AS time, COALESCE((SELECT spool_depth FROM site_health ORDER BY updated_at DESC LIMIT 1), 0) AS spool_depth;",
+          "rawQuery": true,
           "refId": "A"
         }
       ],
@@ -44,25 +63,153 @@
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-BlYlRd"
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT NOW() AS time, COUNT(*) AS measurements_total FROM measurements;",
+          "rawQuery": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total Measurements Ingested",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT NOW() AS time, COUNT(*) AS open_alarm_count FROM alarms WHERE state = 'open' AND raised_at >= NOW() - INTERVAL '24 hours';",
+          "rawQuery": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Open Alarms (24h)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
         "uid": "timescaledb"
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
+        "w": 24,
+        "x": 0,
+        "y": 6
       },
       "id": 2,
       "targets": [
         {
+          "editorMode": "code",
           "format": "time_series",
           "rawSql": "SELECT $__timeGroupAlias(ts_source, '10s'), AVG(value) AS value FROM measurements WHERE $__timeFilter(ts_source) AND asset_id = 'crusher-01' AND signal_id = 'motor_current' GROUP BY 1 ORDER BY 1;",
+          "rawQuery": true,
           "refId": "A"
         }
       ],
       "title": "Crusher Motor Current",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "timescaledb"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 5,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "WITH latest_telemetry AS ( SELECT DISTINCT ON (asset_id) asset_id, site_id, ts_source, quality FROM measurements WHERE ts_source >= NOW() - INTERVAL '24 hours' ORDER BY asset_id, ts_source DESC ), open_alarms AS ( SELECT asset_id, COUNT(*) FILTER (WHERE state = 'open') AS open_alarm_count FROM alarms WHERE raised_at >= NOW() - INTERVAL '24 hours' GROUP BY asset_id ) SELECT lt.ts_source AS time, lt.asset_id, CASE WHEN COALESCE(oa.open_alarm_count, 0) > 0 THEN 'attention' WHEN lt.ts_source < NOW() - INTERVAL '5 minutes' THEN 'stale' ELSE 'healthy' END AS health, COALESCE(oa.open_alarm_count, 0) AS open_alarm_count, lt.quality FROM latest_telemetry lt LEFT JOIN open_alarms oa USING (asset_id) ORDER BY lt.asset_id;",
+          "rawQuery": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Recent Asset Health",
+      "type": "table"
     }
   ],
   "refresh": "10s",
@@ -77,5 +224,5 @@
     "to": "now"
   },
   "title": "Platform Overview",
-  "version": 1
+  "version": 2
 }
