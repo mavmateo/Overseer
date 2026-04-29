@@ -9,7 +9,6 @@ import time
 from urllib.parse import urlparse
 
 import paho.mqtt.client as mqtt
-from confluent_kafka import Producer
 
 from iot_platform.constants import KAFKA_TOPICS
 from iot_platform.contracts import CommandRequest, TelemetryEnvelope, ValidationError
@@ -17,6 +16,7 @@ from iot_platform.topics import ParsedTopic, TopicError, parse_mqtt_topic
 
 from .buffer import SpoolBuffer
 from .config import get_settings
+from .publisher import build_kafka_producer, publish_buffered_record, reset_kafka_producer
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("site-forwarder")
@@ -51,14 +51,7 @@ class Forwarder:
         self.settings = get_settings()
         self.buffer = SpoolBuffer(self.settings.spool_path)
         self.mqtt_client = self._build_mqtt_client()
-        self.kafka_producer = Producer(
-            {
-                "bootstrap.servers": self.settings.kafka_bootstrap_servers,
-                "enable.idempotence": True,
-                "acks": "all",
-                "compression.type": "lz4",
-            }
-        )
+        self.kafka_producer = build_kafka_producer(self.settings.kafka_bootstrap_servers)
         self._flush_thread = threading.Thread(target=self._flush_loop, daemon=True)
 
     def _build_mqtt_client(self) -> mqtt.Client:
@@ -94,25 +87,17 @@ class Forwarder:
                 continue
             for record in pending:
                 try:
-                    delivery_errors: list[str] = []
-
-                    def _delivery_report(error, _msg) -> None:
-                        if error is not None:
-                            delivery_errors.append(str(error))
-
-                    self.kafka_producer.produce(
-                        record.kafka_topic,
-                        key=record.key.encode("utf-8"),
-                        value=record.payload.encode("utf-8"),
-                        on_delivery=_delivery_report,
+                    publish_buffered_record(
+                        self.kafka_producer,
+                        record,
+                        self.settings.kafka_flush_timeout_seconds,
                     )
-                    remaining = self.kafka_producer.flush(timeout=5.0)
-                    if remaining > 0:
-                        raise TimeoutError(f"{remaining} Kafka message(s) remained undelivered after flush timeout")
-                    if delivery_errors:
-                        raise RuntimeError("; ".join(delivery_errors))
                     self.buffer.mark_sent(record.row_id)
                 except Exception as exc:  # pragma: no cover - network-dependent
+                    self.kafka_producer = reset_kafka_producer(
+                        self.kafka_producer,
+                        self.settings.kafka_bootstrap_servers,
+                    )
                     self.buffer.mark_failed(record.row_id, str(exc))
                     LOGGER.warning("Kafka publish failed for row %s: %s", record.row_id, exc)
                     break

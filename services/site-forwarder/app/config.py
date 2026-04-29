@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     mqtt_password: str = Field(default="", alias="MQTT_PASSWORD")
     mqtt_topic_filter: str = "site/+/area/+/asset/+/#"
     kafka_bootstrap_servers: str = Field(default="kafka:9092", alias="KAFKA_BOOTSTRAP_SERVERS")
+    kafka_flush_timeout_seconds: float = Field(default=5.0, alias="KAFKA_FLUSH_TIMEOUT_SECONDS")
     spool_path: str = Field(default="/data/site-forwarder/buffer.db", alias="STORE_BUFFER_PATH")
     flush_interval_seconds: int = 3
     flush_batch_size: int = 250
@@ -25,4 +26,3 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()
-
